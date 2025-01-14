@@ -1,0 +1,81 @@
+name: Universal Build and Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Detect language and build
+      run: |
+        echo "Detecting code language..."
+        
+        # Node.js (JavaScript)
+        if [ -f "package.json" ]; then
+          echo "JavaScript/Node.js project detected"
+          sudo apt-get install -y nodejs npm
+          npm install
+          npm test
+          
+        # Python
+        elif [ -f "requirements.txt" ]; then
+          echo "Python project detected"
+          python3 -m pip install --upgrade pip
+          pip3 install -r requirements.txt
+          pytest
+          
+        # C++ (Using CMake)
+        elif [ -f "CMakeLists.txt" ]; then
+          echo "C++ project detected"
+          sudo apt-get update && sudo apt-get install -y cmake build-essential
+          mkdir -p build && cd build
+          cmake ..
+          make
+          ctest
+          
+        # .NET (C#)
+        elif ls *.csproj 1> /dev/null 2>&1; then
+          echo "C#/.NET project detected"
+          sudo apt-get install -y dotnet-sdk-6.0
+          dotnet build
+          dotnet test
+          
+        # Makefile project
+        elif [ -f "Makefile" ]; then
+          echo "Makefile project detected"
+          make
+          
+        # Java
+        elif ls *.java 1> /dev/null 2>&1; then
+          echo "Java project detected"
+          sudo apt-get install -y default-jdk
+          javac *.java
+          java Main  # Replace Main with your main class name
+          
+        # HTML project
+        elif ls *.html 1> /dev/null 2>&1; then
+          echo "HTML project detected"
+          echo "No build necessary for HTML. Running linting and basic tests."
+
+          # Install a tool for testing HTML (e.g., htmlhint or w3c validation)
+          sudo npm install -g htmlhint
+          
+          # Lint HTML files
+          htmlhint **/*.html
+          
+          # Optionally, you can add other tests, such as accessibility or performance testing.
+          
+        else
+          echo "Unsupported or unrecognized language"
+          exit 1
+        fi
